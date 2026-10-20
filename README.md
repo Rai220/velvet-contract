@@ -1,5 +1,7 @@
 # VELVET CONTRACT
 
+**Play online:** https://krestnikov.org/velvet-contract/
+
 A 2D top-down social-stealth assassination game built with **HTML5 Canvas, vanilla JavaScript, and CSS**. No frameworks, no build step, no external assets.
 
 You are a contract killer inside a living, procedurally generated location. The target is guarded, the rooms have dress codes, and every body is a liability. Blend in, steal a uniform, poison a glass, rig an accident, and get out clean.
