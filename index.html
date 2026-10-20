@@ -1,0 +1,257 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <meta name="theme-color" content="#080a0e">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%23080a0e'/%3E%3Cpath d='M32 9 55 32 32 55 9 32Z' fill='none' stroke='%23d7b66a' stroke-width='3'/%3E%3Cpath d='M32 22 42 32 32 42 22 32Z' fill='%23d7b66a'/%3E%3C/svg%3E">
+  <title>Velvet Contract — Social Stealth Assassination</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div id="app">
+    <canvas id="game" aria-label="Velvet Contract game canvas"></canvas>
+    <div id="grain"></div>
+    <div id="vignette"></div>
+
+    <!-- ============================== HUD ============================== -->
+    <div id="hud" class="hidden">
+      <div class="hud-top">
+        <div class="hud-mission glass">
+          <div class="eyebrow">ACTIVE CONTRACT <span id="contractNo">I</span></div>
+          <div class="target-line"><span class="target-diamond"></span><span id="targetHudName">Target</span></div>
+          <div class="target-sub" id="targetHudSub">Find and eliminate</div>
+        </div>
+
+        <div id="zoneBadge" class="zone-badge">
+          <span class="zone-dot"></span>
+          <span id="zoneText">MAIN HALL</span>
+          <span id="zoneAccess" class="zone-access">PUBLIC</span>
+        </div>
+
+        <div class="hud-right">
+          <div class="hud-status glass">
+            <div class="timer-wrap">
+              <span class="eyebrow">ELAPSED</span>
+              <span id="timer">00:00</span>
+            </div>
+            <div class="alert-wrap">
+              <span class="eyebrow">ALERT</span>
+              <div class="alert-pips" id="alertPips"></div>
+            </div>
+            <button id="muteBtn" class="icon-btn" title="Toggle sound" aria-label="Toggle sound">
+              <span id="muteIcon">◉</span>
+            </button>
+          </div>
+          <div class="minimap-shell glass">
+            <canvas id="minimap"></canvas>
+            <div class="minimap-caption">M — FLOOR PLAN</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="hud-bottom">
+        <div class="hud-vitals glass">
+          <div class="disguise-row">
+            <span class="outfit-swatch" id="outfitSwatch"></span>
+            <div>
+              <div class="eyebrow">DISGUISE</div>
+              <div id="outfitName">Guest</div>
+            </div>
+          </div>
+          <div class="bar-row"><span>VIT</span><div class="bar"><i id="healthBar"></i></div><b id="healthNum">100</b></div>
+          <div class="bar-row"><span>STA</span><div class="bar stamina"><i id="staminaBar"></i></div><b id="staminaNum">100</b></div>
+          <div class="poison-row"><span class="vial-icon">☠</span><span id="poisonCount">No poison</span></div>
+        </div>
+
+        <div id="promptArea" class="prompt-area"></div>
+
+        <div class="hud-controls glass">
+          <span><b>WASD</b> move</span>
+          <span><b>SHIFT</b> sprint</span>
+          <span><b>CTRL</b> crouch</span>
+          <span><b>E</b> interact</span>
+          <span><b>F</b> drag body</span>
+          <span><b>SPACE</b> blade</span>
+          <span><b>M</b> map</span>
+          <span><b>ESC</b> pause</span>
+        </div>
+      </div>
+      <div id="banner" class="banner"></div>
+      <div id="toast" class="toast"></div>
+      <div id="stealthHint" class="stealth-hint"></div>
+    </div>
+
+    <!-- ============================== MAIN MENU ============================== -->
+    <div id="menuScreen" class="screen menu-screen">
+      <div class="menu-veil"></div>
+      <div class="brand">
+        <div class="brand-kicker">A SOCIAL STEALTH ASSASSINATION</div>
+        <h1>VELVET<span>CONTRACT</span></h1>
+        <div class="brand-rule"><i></i><span>✦</span><i></i></div>
+        <p class="brand-tag">Every room has its uniform. Every uniform has its price.</p>
+      </div>
+
+      <div class="menu-layout">
+        <section class="menu-panel glass">
+          <div class="panel-head">
+            <div>
+              <div class="eyebrow">PRIVATE BROKER · EYES ONLY</div>
+              <h2>Contract Dossier</h2>
+            </div>
+            <div class="stamp">CLASSIFIED</div>
+          </div>
+          <div class="form-row">
+            <label for="settingSelect">Location</label>
+            <select id="settingSelect">
+              <option value="random">Random assignment</option>
+            </select>
+          </div>
+          <div class="form-row">
+            <label for="seedInput">Operation seed</label>
+            <input id="seedInput" type="text" maxlength="24" placeholder="leave blank for random" autocomplete="off" spellcheck="false">
+          </div>
+          <div class="dossier-lines" id="dossierLines">
+            <div><span>Approach</span><b>Social infiltration</b></div>
+            <div><span>Rules</span><b>No witnesses. No traces.</b></div>
+            <div><span>Extraction</span><b>After confirmation</b></div>
+          </div>
+          <button id="startBtn" class="primary-btn">Begin Infiltration <span>→</span></button>
+          <div class="microcopy">Best played with headphones · Desktop recommended</div>
+        </section>
+
+        <section class="menu-side">
+          <div class="brief-card glass">
+            <div class="eyebrow">FIELD NOTES</div>
+            <h3>Blend. Adapt. Disappear.</h3>
+            <ul>
+              <li><span>01</span> Every zone expects a specific uniform. A guest in a kitchen draws eyes.</li>
+              <li><span>02</span> Remove a guard, then take their clothes. The body is a liability.</li>
+              <li><span>03</span> Poison the target's glass or rig an environmental accident.</li>
+              <li><span>04</span> Hide what you leave behind. The cleanest kills are never seen.</li>
+            </ul>
+          </div>
+          <div class="controls-card glass">
+            <div class="eyebrow">CONTROLS</div>
+            <div class="key-grid">
+              <div><kbd>W A S D</kbd><span>Move</span></div>
+              <div><kbd>SHIFT</kbd><span>Sprint</span></div>
+              <div><kbd>CTRL</kbd><span>Crouch</span></div>
+              <div><kbd>E</kbd><span>Interact</span></div>
+              <div><kbd>F</kbd><span>Drag body</span></div>
+              <div><kbd>SPACE</kbd><span>Attack</span></div>
+              <div><kbd>M</kbd><span>Floor plan</span></div>
+              <div><kbd>ESC</kbd><span>Pause</span></div>
+            </div>
+          </div>
+        </section>
+      </div>
+      <div class="menu-footer"><span>VELVET CONTRACT</span><span>CANVAS / HTML5</span><span>v1.0</span></div>
+    </div>
+
+    <!-- ============================== BRIEFING ============================== -->
+    <div id="briefingScreen" class="screen briefing-screen hidden">
+      <div class="brief-wrap">
+        <div class="brief-top glass">
+          <div class="eyebrow">CONTRACT <span id="briefNo">I</span> · <span id="briefSetting">EMBASSY</span></div>
+          <h2 id="briefTarget">Eliminate the target</h2>
+          <p id="briefFlavor"></p>
+        </div>
+        <div class="brief-grid">
+          <div class="brief-stat glass"><span>TARGET</span><b id="briefTargetName">—</b></div>
+          <div class="brief-stat glass"><span>LOCATION</span><b id="briefLocation">—</b></div>
+          <div class="brief-stat glass"><span>ACCESS</span><b id="briefAccess">—</b></div>
+        </div>
+        <div class="brief-tip" id="briefTip"></div>
+        <button id="briefStartBtn" class="primary-btn">Enter the floor <span>→</span></button>
+        <div class="brief-note">Press <kbd>ESC</kbd> at any time to pause. Find the target marked in gold.</div>
+      </div>
+    </div>
+
+    <!-- ============================== PAUSE ============================== -->
+    <div id="pauseScreen" class="screen overlay-screen hidden">
+      <div class="modal glass">
+        <div class="eyebrow">OPERATION SUSPENDED</div>
+        <h2>Paused</h2>
+        <p>The floor is holding its breath.</p>
+        <button id="resumeBtn" class="primary-btn">Resume <span>→</span></button>
+        <div class="modal-row">
+          <button id="restartBtn" class="secondary-btn">Restart contract</button>
+          <button id="abandonBtn" class="secondary-btn danger">Abandon</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================== RESULTS ============================== -->
+    <div id="resultScreen" class="screen overlay-screen hidden">
+      <div class="result-card glass">
+        <div class="result-top">
+          <div>
+            <div class="eyebrow" id="resultEyebrow">CONTRACT COMPLETE</div>
+            <h2 id="resultTitle">Target Eliminated</h2>
+            <p id="resultSubtitle">The floor never knew your name.</p>
+          </div>
+          <div class="rank-seal">
+            <span id="rankStars">★★★★★</span>
+            <b id="rankName">SILENT ASSASSIN</b>
+          </div>
+        </div>
+        <div class="result-body">
+          <div class="score-block">
+            <div class="score-big"><span id="scoreTotal">0</span><small>POINTS</small></div>
+            <div class="score-lines" id="scoreLines"></div>
+          </div>
+          <div class="stat-block">
+            <div class="stat-title">FIELD REPORT</div>
+            <div class="stat-grid" id="statGrid"></div>
+          </div>
+        </div>
+        <div class="result-actions">
+          <button id="newContractBtn" class="primary-btn">New Contract <span>→</span></button>
+          <button id="retryBtn" class="secondary-btn">Retry this floor</button>
+          <button id="menuBtn" class="secondary-btn">Main menu</button>
+        </div>
+        <div class="result-seed" id="resultSeed"></div>
+      </div>
+    </div>
+
+    <!-- ============================== FAILURE ============================== -->
+    <div id="failScreen" class="screen overlay-screen hidden">
+      <div class="modal fail-modal glass">
+        <div class="eyebrow">CONTRACT COMPROMISED</div>
+        <h2 id="failTitle">The operation failed</h2>
+        <p id="failText">The target slipped away.</p>
+        <div class="modal-row">
+          <button id="failRetryBtn" class="primary-btn">Try again <span>→</span></button>
+          <button id="failMenuBtn" class="secondary-btn">Main menu</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="mapOverlay" class="map-overlay hidden">
+      <div class="map-frame glass">
+        <div class="map-head"><span class="eyebrow">TACTICAL FLOOR PLAN</span><span class="map-close">M — CLOSE</span></div>
+        <canvas id="bigMap"></canvas>
+        <div class="map-legend">
+          <span><i class="lg player"></i>You</span>
+          <span><i class="lg target"></i>Target</span>
+          <span><i class="lg guard"></i>Guards</span>
+          <span><i class="lg staff"></i>Staff</span>
+          <span><i class="lg public"></i>Public</span>
+          <span><i class="lg private"></i>Private</span>
+          <span><i class="lg secure"></i>Restricted</span>
+        </div>
+      </div>
+    </div>
+
+    <div id="rotateNotice">This contract plays best on a wider screen.</div>
+  </div>
+
+  <script src="js/utils.js"></script>
+  <script src="js/data.js"></script>
+  <script src="js/level.js"></script>
+  <script src="js/render.js"></script>
+  <script src="js/entities.js"></script>
+  <script src="js/game.js"></script>
+</body>
+</html>
